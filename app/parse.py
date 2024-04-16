@@ -1,9 +1,9 @@
 import csv
 from dataclasses import dataclass, fields, astuple
 from urllib.parse import urljoin
-
-import requests as requests
+from typing import List
 from bs4 import BeautifulSoup
+import requests
 
 BASE_URL = "https://quotes.toscrape.com/"
 
@@ -12,27 +12,26 @@ BASE_URL = "https://quotes.toscrape.com/"
 class Quote:
     text: str
     author: str
-    tags: list[str]
+    tags: List[str]
+
+    @classmethod
+    def from_soup(cls, quote_soup: BeautifulSoup):
+        return cls(
+            text=quote_soup.select_one(".text").text,
+            author=quote_soup.select_one(".author").text,
+            tags=[tag.get_text() for tag in quote_soup.select("a.tag")],
+        )
 
 
 QUOTE_FIELDS = [field.name for field in fields(Quote)]
 
 
-def parse_single_quote(quote_soup: BeautifulSoup) -> Quote:
-    return Quote(
-        text=quote_soup.select_one(".text").text,
-        author=quote_soup.select_one(".author").text,
-        tags=[data.get_text() for data in quote_soup.select("a.tag")],
-    )
-
-
-def get_single_page_quotes(page_soup: BeautifulSoup) -> [Quote]:
+def get_single_page_quotes(page_soup: BeautifulSoup) -> List[Quote]:
     quotes = page_soup.select(".quote")
+    return [Quote.from_soup(quote_soup) for quote_soup in quotes]
 
-    return [parse_single_quote(quote_soup) for quote_soup in quotes]
 
-
-def get_home_products() -> [Quote]:
+def get_home_products() -> List[Quote]:
     page = requests.get(BASE_URL).content
     page_soup = BeautifulSoup(page, "html.parser")
 
