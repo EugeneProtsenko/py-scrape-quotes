@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 import requests as requests
 from bs4 import BeautifulSoup
 
-URL = "https://quotes.toscrape.com/"
+BASE_URL = "https://quotes.toscrape.com/"
 
 
 @dataclass
@@ -33,14 +33,14 @@ def get_single_page_quotes(page_soup: BeautifulSoup) -> [Quote]:
 
 
 def get_home_products() -> [Quote]:
-    page = requests.get(URL).content
+    page = requests.get(BASE_URL).content
     page_soup = BeautifulSoup(page, "html.parser")
 
     all_products = get_single_page_quotes(page_soup)
 
     while page_soup.select_one("li.next"):
         next_page = requests.get(
-            urljoin(URL, page_soup.select_one("li.next > a")["href"])
+            urljoin(BASE_URL, page_soup.select_one("li.next > a")["href"])
         ).content
 
         soup = BeautifulSoup(next_page, "html.parser")
